@@ -3,7 +3,6 @@ package com.example.background.workers;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.BlurMaskFilter;
 import android.net.Uri;
 import android.util.Log;
 
@@ -15,14 +14,14 @@ import com.example.background.R;
 
 public class BlurWorker extends Worker {
 
-    private static final String TAG = BlurWorker.class.getSimpleName();
-
     // Constructor
     public BlurWorker(
             @NonNull Context appContext,
             @NonNull WorkerParameters workerParams) {
         super(appContext, workerParams);
     }
+
+    private static final String TAG = BlurWorker.class.getSimpleName();
 
     //Overriding the doWork() method to use WorkerUtil's makeStatusNotification
     @NonNull
@@ -32,25 +31,27 @@ public class BlurWorker extends Worker {
 
         //Creating a bitmap using a try/catch statement
         try {
-            //Bitmap file from the test image
+
             Bitmap picture = BitmapFactory.decodeResource(
                     applicationContext.getResources(),
                     R.drawable.android_cupcake);
-            //Blur the bitmap
-            Bitmap outpuit = WorkerUtils.blurBitmap(picture, applicationContext);
 
-            //Write bitmap to a temp file
-            Uri outputUri = WorkerUtils.writeBitmapToFile(applicationContext, outpuit);
+            // Blur the bitmap
+            Bitmap output = WorkerUtils.blurBitmap(picture, applicationContext);
 
-            WorkerUtils.makeStatusNotification("Output is" + outputUri.toString(), applicationContext);
+            // Write bitmap to a temp file
+            Uri outputUri = WorkerUtils.writeBitmapToFile(applicationContext, output);
 
-            //If there were no errors, return SUCEESS
+            WorkerUtils.makeStatusNotification("Output is "
+                    + outputUri.toString(), applicationContext);
+
+            // If there were no errors, return SUCCESS
             return Result.success();
-
         } catch (Throwable throwable) {
-            //Technically WorkManager will return Result.failure()
+
+            // Technically WorkManager will return Result.failure()
             // but it's best to be explicit about it.
-            // Thus if there were error, we return FAILURE
+            // Thus if there were errors, we're return FAILURE
             Log.e(TAG, "Error applying blur", throwable);
             return Result.failure();
         }
