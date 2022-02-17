@@ -52,6 +52,9 @@ public class BlurViewModel extends ViewModel {
     //New instance variable for the WorkInfo class
     private LiveData<List<WorkInfo>> mSavedWorkInfo;
 
+    //New instance variable for the WorkInfo
+    private Uri mOutputUri;
+
     // Constructor
     public BlurViewModel(@NonNull Application application) {
         super();
@@ -65,6 +68,14 @@ public class BlurViewModel extends ViewModel {
 
     // Getter method for mSavedWorkInfo
     LiveData<List<WorkInfo>> getOutputWorkInfo() { return mSavedWorkInfo; }
+
+    // Add a getter and setter method for mOutputUri
+    void setmOutputUri(String outputImageUri){
+        mOutputUri = uriOrNull(outputImageUri);
+    }
+
+    Uri getOutputUri() { return mOutputUri; }
+
 
     /**
      * Creates the input data bundle which includes the Uri to operate on
