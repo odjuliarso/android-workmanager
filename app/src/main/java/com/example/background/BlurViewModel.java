@@ -21,8 +21,10 @@ import static com.example.background.Constants.KEY_IMAGE_URI;
 import static com.example.background.Constants.TAG_OUTPUT;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;
+import androidx.work.Constraints;
 import androidx.work.Data;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
@@ -116,9 +118,11 @@ public class BlurViewModel extends ViewModel {
                         ExistingWorkPolicy.REPLACE,
                         OneTimeWorkRequest.from(CleanUpWorker.class));
 
-//      Add WorkRequest to Cleanup temporary images
-//        WorkContinuation continuation =
-//                mWorkManager.beginWith(OneTimeWorkRequest.from(CleanUpWorker.class));
+//      Create charging constraint
+        Constraints constraints = new Constraints.Builder()
+                .setRequiresCharging(true)
+                .setRequiresStorageNotLow(true)
+                .build();
 
 //      Add WorkRequest to blur the image the number of times requested
         for (int i = 0; i < blurLevel; i++) {
@@ -137,6 +141,7 @@ public class BlurViewModel extends ViewModel {
 
 //      Add WorkRequest to save the image to the filesystem
         OneTimeWorkRequest save = new OneTimeWorkRequest.Builder(SaveImageToFileWorker.class)
+                .setConstraints(constraints)   // this adds the Constraints
                 .addTag(TAG_OUTPUT)  // this adds the tag
                 .build();
         continuation = continuation.then(save);
