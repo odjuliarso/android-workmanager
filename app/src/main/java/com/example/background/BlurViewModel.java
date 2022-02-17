@@ -78,13 +78,23 @@ public class BlurViewModel extends ViewModel {
     void applyBlur(int blurLevel) {
 
 //      Add WorkRequest to Cleanup temporary images
-        WorkContinuation continuation = mWorkManager.beginWith(OneTimeWorkRequest.from(CleanUpWorker.class));
+        WorkContinuation continuation =
+                mWorkManager.beginWith(OneTimeWorkRequest.from(CleanUpWorker.class));
 
-//      Add WorkRequest to blur the image
-        OneTimeWorkRequest blurRequest = new OneTimeWorkRequest.Builder(BlurWorker.class)
-                .setInputData(createInputDataForUri())
-                .build();
-        continuation = continuation.then(blurRequest);
+//      Add WorkRequest to blur the image the number of times requested
+        for (int i = 0; i < blurLevel; i++) {
+            OneTimeWorkRequest.Builder blurBuilder =
+                    new OneTimeWorkRequest.Builder(BlurWorker.class);
+
+//          Input the Uri if this is the first blur operation.
+//          After the first blur operation the input will be the output of previous
+//          blur operations.
+            if (i == 0) {
+                blurBuilder.setInputData(createInputDataForUri());
+            }
+
+            continuation = continuation.then(blurBuilder.build());
+        }
 
 //      Add WorkRequest to save the image to the filesystem
         OneTimeWorkRequest save = new OneTimeWorkRequest.Builder(SaveImageToFileWorker.class)
@@ -93,6 +103,7 @@ public class BlurViewModel extends ViewModel {
 
 //      Actually start the work
         continuation.enqueue();
+
 
 //        OneTimeWorkRequest blurRequest =
 //                new OneTimeWorkRequest.Builder(BlurWorker.class)
