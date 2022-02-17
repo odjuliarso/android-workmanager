@@ -59,6 +59,9 @@ public class BlurActivity extends AppCompatActivity {
             }
         });
 
+        // Hookup the Cancel button
+        binding.cancelButton.setOnClickListener(view -> mViewModel.cancelWork());
+
         // The observer code.
         // Show work info status
         mViewModel.getOutputWorkInfo().observe(this, listOfWorkInfo -> {

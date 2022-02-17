@@ -76,6 +76,11 @@ public class BlurViewModel extends ViewModel {
 
     Uri getOutputUri() { return mOutputUri; }
 
+    // Cancel work using the work's unique name
+    void cancelWork() {
+        mWorkManager.cancelUniqueWork(IMAGE_MANIPULATION_WORK_NAME);
+    }
+
 
     /**
      * Creates the input data bundle which includes the Uri to operate on
