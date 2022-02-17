@@ -16,13 +16,18 @@
 
 package com.example.background;
 
+import static com.example.background.Constants.IMAGE_MANIPULATION_WORK_NAME;
 import static com.example.background.Constants.KEY_IMAGE_URI;
+import static com.example.background.Constants.TAG_OUTPUT;
 
 import androidx.annotation.NonNull;
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.work.Data;
+import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkContinuation;
+import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
 import android.app.Application;
@@ -36,11 +41,16 @@ import com.example.background.workers.BlurWorker;
 import com.example.background.workers.CleanUpWorker;
 import com.example.background.workers.SaveImageToFileWorker;
 
+import java.util.List;
+
 public class BlurViewModel extends ViewModel {
 
     private WorkManager mWorkManager;
 
     private Uri mImageUri;
+
+    //New instance variable for the WorkInfo class
+    private LiveData<List<WorkInfo>> mSavedWorkInfo;
 
     // Constructor
     public BlurViewModel(@NonNull Application application) {
@@ -48,7 +58,13 @@ public class BlurViewModel extends ViewModel {
         mWorkManager = WorkManager.getInstance(application);
 
         mImageUri = getImageUri(application.getApplicationContext());
+
+        // Instance to tag WorkRequest
+        mSavedWorkInfo = mWorkManager.getWorkInfosByTagLiveData(TAG_OUTPUT);
     }
+
+    // Getter method for mSavedWorkInfo
+    LiveData<List<WorkInfo>> getOutputWorkInfo() { return mSavedWorkInfo; }
 
     /**
      * Creates the input data bundle which includes the Uri to operate on
@@ -76,10 +92,17 @@ public class BlurViewModel extends ViewModel {
     Pass input into the BlurImage WorkRequest.
     */
     void applyBlur(int blurLevel) {
+//      Add WorkRequest to Cleanup temporary images,
+//      with beginUniqueWork to ensure the work is the most
+//      current image the user wants to blur
+        WorkContinuation continuation = mWorkManager
+                .beginUniqueWork(IMAGE_MANIPULATION_WORK_NAME,
+                        ExistingWorkPolicy.REPLACE,
+                        OneTimeWorkRequest.from(CleanUpWorker.class));
 
 //      Add WorkRequest to Cleanup temporary images
-        WorkContinuation continuation =
-                mWorkManager.beginWith(OneTimeWorkRequest.from(CleanUpWorker.class));
+//        WorkContinuation continuation =
+//                mWorkManager.beginWith(OneTimeWorkRequest.from(CleanUpWorker.class));
 
 //      Add WorkRequest to blur the image the number of times requested
         for (int i = 0; i < blurLevel; i++) {
@@ -98,19 +121,12 @@ public class BlurViewModel extends ViewModel {
 
 //      Add WorkRequest to save the image to the filesystem
         OneTimeWorkRequest save = new OneTimeWorkRequest.Builder(SaveImageToFileWorker.class)
+                .addTag(TAG_OUTPUT)  // this adds the tag
                 .build();
         continuation = continuation.then(save);
 
 //      Actually start the work
         continuation.enqueue();
-
-
-//        OneTimeWorkRequest blurRequest =
-//                new OneTimeWorkRequest.Builder(BlurWorker.class)
-//                        .setInputData(createInputDataForUri())
-//                        .build();
-//
-//        mWorkManager.enqueue(blurRequest);
     }
 
     private Uri uriOrNull(String uriString) {
