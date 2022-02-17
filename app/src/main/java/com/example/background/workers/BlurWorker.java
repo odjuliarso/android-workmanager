@@ -35,6 +35,11 @@ public class BlurWorker extends Worker {
     public Result doWork() {
         Context applicationContext = getApplicationContext();
 
+        // Makes a notification when the work starts and slows down the work so that its easier to
+        // see each WorkRequest start, even on emulated devices
+        WorkerUtils.makeStatusNotification("Blurring image", applicationContext);
+        WorkerUtils.sleep();
+
         //A variable to get the input: the URI passed from the Data object
         String resourceUri = getInputData().getString(KEY_IMAGE_URI);
 
@@ -47,7 +52,7 @@ public class BlurWorker extends Worker {
             }
 
             ContentResolver resolver = applicationContext.getContentResolver();
-//            Create a bitmap
+//          // Create a bitmap
             Bitmap picture = BitmapFactory.decodeStream(
                     resolver.openInputStream(Uri.parse(resourceUri)));
 
@@ -56,9 +61,6 @@ public class BlurWorker extends Worker {
 
             // Write bitmap to a temp file
             Uri outputUri = WorkerUtils.writeBitmapToFile(applicationContext, output);
-
-            WorkerUtils.makeStatusNotification("Output is "
-                    + outputUri.toString(), applicationContext);
 
             // Output temporary URI as a Data object, using the same (Constant) Key
             Data outputData = new Data.Builder()
